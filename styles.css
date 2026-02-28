@@ -219,7 +219,8 @@ body {
 /* NAVIGATION */
 
 .nav {
-  position: sticky;
+  position: relative;
+  top: 0;
   top: 16px;
   z-index: 20;
   transition: transform var(--transition-smooth);
