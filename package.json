@@ -4,7 +4,8 @@
   "private": true,
   "description": "Professional portfolio website for Tuba Khan (Strategic Content Specialist).",
   "scripts": {
-    "start": "npx live-server --open=./index.html --port=5500"
+    "start": "npx live-server --open=./index.html --port=5500",
+    "dev": "npx live-server --open=./index.html --port=5500"
   },
   "devDependencies": {
     "live-server": "^1.2.2"

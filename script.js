@@ -1,329 +1,378 @@
-// Mobile Navigation Toggle
-document.addEventListener('DOMContentLoaded', function() {
-  const mobileToggle = document.querySelector('.nav__mobile-toggle');
-  const navLinks = document.querySelector('.nav__links');
-  const navLinkItems = document.querySelectorAll('.nav__link');
-  
-  // Toggle mobile menu
-  mobileToggle.addEventListener('click', function() {
-    navLinks.classList.toggle('nav__links--mobile-open');
-    mobileToggle.classList.toggle('nav__mobile-toggle--active');
-    
-    // Prevent body scroll when menu is open
-    if (navLinks.classList.contains('nav__links--mobile-open')) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-  });
-  
-  // Close mobile menu when clicking on a link
-  navLinkItems.forEach(link => {
-    link.addEventListener('click', function() {
-      navLinks.classList.remove('nav__links--mobile-open');
-      mobileToggle.classList.remove('nav__mobile-toggle--active');
-      document.body.style.overflow = '';
-    });
-  });
-  
-  // Close mobile menu when clicking outside
-  document.addEventListener('click', function(event) {
-    if (!mobileToggle.contains(event.target) && !navLinks.contains(event.target)) {
-      navLinks.classList.remove('nav__links--mobile-open');
-      mobileToggle.classList.remove('nav__mobile-toggle--active');
-      document.body.style.overflow = '';
-    }
-  });
-  
-  // Handle resize events
-  let resizeTimer;
-  window.addEventListener('resize', function() {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(function() {
-      if (window.innerWidth > 768) {
-        navLinks.classList.remove('nav__links--mobile-open');
-        mobileToggle.classList.remove('nav__mobile-toggle--active');
-        document.body.style.overflow = '';
+/**
+ * TUBA KHAN PORTFOLIO — 2026 3D INTERACTIVITY & ANIMATION ENGINE
+ */
+
+document.addEventListener('DOMContentLoaded', () => {
+  initScrollProgress();
+  initCustomCursor();
+  initBackgroundCanvas();
+  init3DTilt();
+  initScrollReveal();
+  initParallax();
+  initNavigation();
+});
+
+/* ==========================================================================
+   1. SCROLL PROGRESS BAR
+   ========================================================================== */
+function initScrollProgress() {
+  const progressBar = document.getElementById('scrollProgressBar');
+  if (!progressBar) return;
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      progressBar.style.width = `${progress}%`;
+    },
+    { passive: true }
+  );
+}
+
+/* ==========================================================================
+   2. CUSTOM 3D CURSOR (DESKTOP)
+   ========================================================================== */
+function initCustomCursor() {
+  const cursorDot = document.getElementById('cursorDot');
+  const cursorGlow = document.getElementById('cursorGlow');
+  if (!cursorDot || !cursorGlow) return;
+
+  let mouseX = -100;
+  let mouseY = -100;
+  let dotX = -100;
+  let dotY = -100;
+  let glowX = -100;
+  let glowY = -100;
+  let hasMoved = false;
+
+  window.addEventListener(
+    'mousemove',
+    (e) => {
+      if (!hasMoved) {
+        hasMoved = true;
+        cursorDot.style.opacity = '1';
+        cursorGlow.style.opacity = '1';
+        dotX = glowX = e.clientX;
+        dotY = glowY = e.clientY;
       }
-    }, 250);
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    },
+    { passive: true }
+  );
+
+  document.addEventListener('mouseleave', () => {
+    cursorDot.style.opacity = '0';
+    cursorGlow.style.opacity = '0';
   });
 
-  // Show/hide navigation on scroll for mobile
-  let lastScrollTop = 0;
-  let scrollTimer;
-  
-  window.addEventListener('scroll', function() {
-    clearTimeout(scrollTimer);
-    const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    
-    scrollTimer = setTimeout(function() {
-      if (window.innerWidth <= 768) {
-        if (currentScrollTop > lastScrollTop) {
-          // Scrolling down - hide navigation
-          document.querySelector('.nav').style.transform = 'translateY(-100%)';
-        } else {
-          // Scrolling up - show navigation
-          document.querySelector('.nav').style.transform = 'translateY(0)';
+  document.addEventListener('mouseenter', () => {
+    if (hasMoved) {
+      cursorDot.style.opacity = '1';
+      cursorGlow.style.opacity = '1';
+    }
+  });
+
+  function animateCursor() {
+    if (hasMoved) {
+      dotX += (mouseX - dotX) * 0.45;
+      dotY += (mouseY - dotY) * 0.45;
+      glowX += (mouseX - glowX) * 0.15;
+      glowY += (mouseY - glowY) * 0.15;
+
+      cursorDot.style.left = `${dotX}px`;
+      cursorDot.style.top = `${dotY}px`;
+      cursorGlow.style.left = `${glowX}px`;
+      cursorGlow.style.top = `${glowY}px`;
+    }
+
+    requestAnimationFrame(animateCursor);
+  }
+
+  animateCursor();
+
+  // Hover states on interactive elements
+  const hoverables = document.querySelectorAll('a, button, [data-tilt], input, textarea');
+  hoverables.forEach((el) => {
+    el.addEventListener('mouseenter', () => cursorGlow.classList.add('cursor-hover'));
+    el.addEventListener('mouseleave', () => cursorGlow.classList.remove('cursor-hover'));
+  });
+}
+
+/* ==========================================================================
+   3. 3D INTERACTIVE PARTICLE CANVAS
+   ========================================================================== */
+function initBackgroundCanvas() {
+  const canvas = document.getElementById('bg-canvas');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  let width = (canvas.width = window.innerWidth);
+  let height = (canvas.height = window.innerHeight);
+
+  let mouse = { x: width / 2, y: height / 2, radius: 120 };
+  let scrollSpeed = 0;
+  let lastScrollY = window.pageYOffset;
+
+  window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    createParticles();
+  });
+
+  window.addEventListener(
+    'mousemove',
+    (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    },
+    { passive: true }
+  );
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      const currentScrollY = window.pageYOffset;
+      scrollSpeed = (currentScrollY - lastScrollY) * 0.1;
+      lastScrollY = currentScrollY;
+    },
+    { passive: true }
+  );
+
+  // Particle constellation
+  let particles = [];
+  const particleCount = Math.min(Math.floor((width * height) / 20000), 65);
+
+  class Particle {
+    constructor() {
+      this.reset();
+    }
+
+    reset() {
+      this.x = Math.random() * width;
+      this.y = Math.random() * height;
+      this.z = Math.random() * 2 + 0.5; // 3D depth
+      this.vx = (Math.random() - 0.5) * 0.35 * this.z;
+      this.vy = (Math.random() - 0.5) * 0.35 * this.z;
+      this.radius = Math.random() * 1.6 * this.z + 0.5;
+      this.color = Math.random() > 0.4 ? 'rgba(99, 102, 241,' : 'rgba(6, 182, 212,';
+      this.alpha = Math.random() * 0.4 + 0.15;
+    }
+
+    update() {
+      this.x += this.vx;
+      this.y += this.vy + scrollSpeed * 0.08 * this.z;
+
+      // Mouse subtle repulsion
+      const dx = mouse.x - this.x;
+      const dy = mouse.y - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < mouse.radius) {
+        const force = (1 - dist / mouse.radius) * 1.2;
+        this.x -= (dx / dist) * force;
+        this.y -= (dy / dist) * force;
+      }
+
+      // Wrap boundaries
+      if (this.x < 0) this.x = width;
+      if (this.x > width) this.x = 0;
+      if (this.y < 0) this.y = height;
+      if (this.y > height) this.y = 0;
+    }
+
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `${this.color} ${this.alpha * 0.7})`;
+      ctx.fill();
+    }
+  }
+
+  function createParticles() {
+    particles = [];
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+  }
+
+  createParticles();
+
+  function render() {
+    ctx.clearRect(0, 0, width, height);
+
+    // Fade scroll speed decay
+    scrollSpeed *= 0.92;
+
+    // Connect particles
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 100) {
+          const alpha = (1 - dist / 100) * 0.12;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(99, 102, 241, ${alpha})`;
+          ctx.lineWidth = 0.75;
+          ctx.stroke();
         }
       }
-      lastScrollTop = currentScrollTop;
-    }, 10);
-  });
-  
-  // Smooth scrolling for anchor links
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-      e.preventDefault();
-      const target = document.querySelector(this.getAttribute('href'));
-      if (target) {
-        const offsetTop = target.offsetTop - 80; // Account for sticky nav
-        window.scrollTo({
-          top: offsetTop,
-          behavior: 'smooth'
-        });
-      }
+    }
+
+    particles.forEach((p) => {
+      p.update();
+      p.draw();
+    });
+
+    requestAnimationFrame(render);
+  }
+
+  render();
+}
+
+/* ==========================================================================
+   4. 3D CARD TILT PHYSICS
+   ========================================================================== */
+function init3DTilt() {
+  if (window.matchMedia('(hover: none)').matches) return;
+
+  const tiltCards = document.querySelectorAll('[data-tilt]');
+
+  tiltCards.forEach((card) => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      // Calculate tilt degrees (Max 6 deg for subtle high-end feel)
+      const rotateX = ((y - centerY) / centerY) * -5.5;
+      const rotateY = ((x - centerX) / centerX) * 5.5;
+
+      card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.012, 1.012, 1.012)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
     });
   });
-  
-  // Update active nav link on scroll
-  const sections = document.querySelectorAll('section[id]');
+}
+
+/* ==========================================================================
+   5. SCROLL-TRIGGERED 3D REVEAL ANIMATIONS
+   ========================================================================== */
+function initScrollReveal() {
+  const revealElements = document.querySelectorAll('[data-reveal]');
+  if (!revealElements.length) return;
+
   const observerOptions = {
-    rootMargin: '-80px 0px -50% 0px',
-    threshold: 0
+    threshold: 0.1,
+    rootMargin: '0px 0px -40px 0px',
   };
-  
-  const observer = new IntersectionObserver(function(entries) {
-    entries.forEach(entry => {
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
       if (entry.isIntersecting) {
-        navLinkItems.forEach(link => {
-          link.classList.remove('nav__link--active');
-          if (link.getAttribute('href') === `#${entry.target.id}`) {
-            link.classList.add('nav__link--active');
-          }
-        });
+        entry.target.classList.add('is-revealed');
+        observer.unobserve(entry.target);
       }
     });
   }, observerOptions);
-  
-  sections.forEach(section => {
-    observer.observe(section);
-  });
-  
-  // Add touch feedback for mobile
-  const touchElements = document.querySelectorAll('.btn, .project-feature, .beat-card, .contact__detail');
-  touchElements.forEach(element => {
-    element.addEventListener('touchstart', function() {
-      this.style.transform = 'scale(0.98)';
+
+  revealElements.forEach((el) => observer.observe(el));
+}
+
+/* ==========================================================================
+   6. 3D PARALLAX DEPTH ON SCROLL
+   ========================================================================== */
+function initParallax() {
+  const backdropText = document.getElementById('heroBackdrop');
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      const scrolled = window.pageYOffset;
+      if (backdropText && scrolled < window.innerHeight) {
+        backdropText.style.transform = `translate(-50%, calc(-50% + ${scrolled * 0.22}px))`;
+        backdropText.style.opacity = `${Math.max(0, 1 - scrolled / (window.innerHeight * 0.65))}`;
+      }
+    },
+    { passive: true }
+  );
+}
+
+/* ==========================================================================
+   7. NAVIGATION & ACTIVE SECTION HIGHLIGHTER
+   ========================================================================== */
+function initNavigation() {
+  const mobileToggle = document.getElementById('mobileToggle');
+  const navLinks = document.getElementById('navLinks');
+  const navItems = document.querySelectorAll('.nav__link');
+
+  if (mobileToggle && navLinks) {
+    mobileToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = navLinks.classList.toggle('nav__links--open');
+      mobileToggle.classList.toggle('nav__mobile-toggle--active', isOpen);
+      mobileToggle.setAttribute('aria-expanded', isOpen);
     });
-    
-    element.addEventListener('touchend', function() {
-      this.style.transform = '';
+
+    // Close mobile menu when clicking a link
+    navItems.forEach((link) => {
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('nav__links--open');
+        mobileToggle.classList.remove('nav__mobile-toggle--active');
+        mobileToggle.setAttribute('aria-expanded', 'false');
+      });
     });
-  });
-  
-  // Scroll-triggered animations
-  const animateOnScroll = function() {
-    const elements = document.querySelectorAll('.hero__content, .about__content-column, .project-feature, .beat-card, .contact__inner');
-    
-    elements.forEach(element => {
-      const elementTop = element.getBoundingClientRect().top;
-      const elementBottom = element.getBoundingClientRect().bottom;
-      const isVisible = (elementTop < window.innerHeight && elementBottom > 0);
-      
-      if (isVisible && !element.classList.contains('animated')) {
-        element.classList.add('animated');
-        element.style.animation = 'fadeInUp 0.8s ease-out forwards';
+
+    // Close mobile menu when tapping outside
+    document.addEventListener('click', (e) => {
+      if (navLinks.classList.contains('nav__links--open')) {
+        if (!navLinks.contains(e.target) && !mobileToggle.contains(e.target)) {
+          navLinks.classList.remove('nav__links--open');
+          mobileToggle.classList.remove('nav__mobile-toggle--active');
+          mobileToggle.setAttribute('aria-expanded', 'false');
+        }
       }
     });
-  };
-  
-  // Parallax effect for background elements
-  const parallaxElements = document.querySelectorAll('.orb, .particle');
-  const parallaxScroll = function() {
-    const scrolled = window.pageYOffset;
-    const speed = 0.5;
-    
-    parallaxElements.forEach((element, index) => {
-      const yPos = -(scrolled * speed * (index % 2 === 0 ? 1 : -1));
-      element.style.transform = `translateY(${yPos}px)`;
-    });
-  };
-  
-  // Floating animation for hero elements
-  const floatElements = document.querySelectorAll('.hero__eyebrow, .hero__headline, .hero__subheadline, .hero__description');
-  floatElements.forEach((element, index) => {
-    element.style.animation = `fadeInUp 0.8s ease-out ${0.2 + index * 0.2}s both, float 6s ease-in-out ${index * 0.5}s infinite`;
-  });
-  
-  // Enhanced button interactions
-  const buttons = document.querySelectorAll('.btn');
-  buttons.forEach(button => {
-    button.addEventListener('mouseenter', function(e) {
-      const rect = this.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      const ripple = document.createElement('span');
-      ripple.className = 'ripple';
-      ripple.style.left = x + 'px';
-      ripple.style.top = y + 'px';
-      
-      this.appendChild(ripple);
-      
-      setTimeout(() => {
-        ripple.remove();
-      }, 600);
-    });
-  });
-  
-  // Interactive cursor effect (desktop only)
-  if (window.innerWidth > 768) {
-    const cursor = document.createElement('div');
-    cursor.className = 'custom-cursor';
-    document.body.appendChild(cursor);
-    
-    document.addEventListener('mousemove', (e) => {
-      cursor.style.left = e.clientX + 'px';
-      cursor.style.top = e.clientY + 'px';
-    });
-    
-    const interactiveElements = document.querySelectorAll('a, button, .project-feature, .beat-card');
-    interactiveElements.forEach(element => {
-      element.addEventListener('mouseenter', () => {
-        cursor.classList.add('cursor-hover');
-      });
-      
-      element.addEventListener('mouseleave', () => {
-        cursor.classList.remove('cursor-hover');
-      });
-    });
   }
-  
-  // Scroll events
-  window.addEventListener('scroll', function() {
-    animateOnScroll();
-    parallaxScroll();
-  });
-  
-  // Initial animations
-  animateOnScroll();
-  
-  // Add loading animation
-  document.body.classList.add('loaded');
-  
-  // Dynamic particle generation
-  const generateParticles = function() {
-    const particlesContainer = document.querySelector('.floating-particles');
-    if (!particlesContainer) return;
-    
-    setInterval(() => {
-      const particle = document.createElement('div');
-      particle.className = 'particle dynamic-particle';
-      particle.style.cssText = `
-        position: absolute;
-        width: ${Math.random() * 4 + 2}px;
-        height: ${Math.random() * 4 + 2}px;
-        background: linear-gradient(135deg, var(--accent), #8b92ff);
-        border-radius: 50%;
-        left: ${Math.random() * 100}%;
-        animation: floatParticle ${Math.random() * 10 + 15}s linear;
-        opacity: 0.8;
-      `;
-      
-      particlesContainer.appendChild(particle);
-      
-      setTimeout(() => {
-        particle.remove();
-      }, 25000);
-    }, 3000);
-  };
-  
-  generateParticles();
-  
-  // Page visibility optimization
-  document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-      // Pause animations when page is not visible
-      document.querySelectorAll('.orb, .particle').forEach(el => {
-        el.style.animationPlayState = 'paused';
-      });
-    } else {
-      // Resume animations when page is visible
-      document.querySelectorAll('.orb, .particle').forEach(el => {
-        el.style.animationPlayState = 'running';
-      });
-    }
-  });
-});
 
-// Add CSS for custom cursor and ripple effects
-const style = document.createElement('style');
-style.textContent = `
-  .custom-cursor {
-    position: fixed;
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--accent);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9999;
-    transition: transform 0.1s ease;
-    transform: translate(-50%, -50%);
-  }
-  
-  .custom-cursor.cursor-hover {
-    transform: translate(-50%, -50%) scale(1.5);
-    background: rgba(92, 103, 255, 0.1);
-  }
-  
-  .ripple {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.6);
-    transform: scale(0);
-    animation: ripple 0.6s linear;
-    pointer-events: none;
-  }
-  
-  @keyframes ripple {
-    to {
-      transform: scale(4);
-      opacity: 0;
+  // Active section tracking with scroll position
+  const sections = [
+    { id: 'contact', el: document.getElementById('contact') },
+    { id: 'beat', el: document.getElementById('beat') },
+    { id: 'portfolio', el: document.getElementById('portfolio') },
+    { id: 'about', el: document.getElementById('about') },
+    { id: 'home', el: document.getElementById('home') },
+  ].filter(s => s.el !== null);
+
+  function updateActiveNav() {
+    const scrollPosition = window.pageYOffset + 220;
+
+    for (const section of sections) {
+      const top = section.el.offsetTop;
+      if (scrollPosition >= top) {
+        navItems.forEach((link) => {
+          if (link.getAttribute('href') === `#${section.id}`) {
+            link.classList.add('nav__link--active');
+          } else {
+            link.classList.remove('nav__link--active');
+          }
+        });
+        break;
+      }
     }
   }
-  
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-  
-  body.loaded {
-    animation: pageLoad 1s ease-out;
-  }
-  
-  @keyframes pageLoad {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  .animated {
-    opacity: 1;
-  }
-  
-  @media (max-width: 768px) {
-    .custom-cursor {
-      display: none;
-    }
-  }
-`;
-document.head.appendChild(style);
+
+  window.addEventListener('scroll', updateActiveNav, { passive: true });
+  updateActiveNav();
+}
