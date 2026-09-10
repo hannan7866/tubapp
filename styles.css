@@ -126,6 +126,86 @@ a {
 }
 
 /* ==========================================================================
+   TOP ANNOUNCEMENT BAR
+   ========================================================================== */
+
+.top-announcement-bar {
+  position: relative;
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 20px;
+  background: rgba(16, 22, 44, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-specular);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: clamp(0.78rem, 2.2vw, 0.88rem);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.top-announcement-bar:hover {
+  background: rgba(24, 32, 62, 0.95);
+  border-bottom-color: rgba(99, 102, 241, 0.45);
+  box-shadow: 0 4px 25px var(--primary-glow);
+}
+
+.top-announcement-bar__spark {
+  display: inline-block;
+  font-size: 0.95em;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
+  animation: sparkPulse 2.5s infinite ease-in-out;
+}
+
+.top-announcement-bar__text {
+  background: linear-gradient(135deg, #ffffff 0%, #d1d5db 50%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all var(--transition-fast);
+}
+
+.top-announcement-bar:hover .top-announcement-bar__text {
+  background: linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #a5b4fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.top-announcement-bar__arrow {
+  display: inline-block;
+  color: var(--accent-cyan);
+  font-size: 1.05em;
+  font-weight: 700;
+  transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.top-announcement-bar:hover .top-announcement-bar__arrow {
+  transform: translate(2px, -2px);
+  color: #fff;
+}
+
+@keyframes sparkPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
    BACKGROUND CANVAS & AMBIENT MESH
    ========================================================================== */
 
