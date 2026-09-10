@@ -350,6 +350,7 @@ function initNavigation() {
   const sections = [
     { id: 'contact', el: document.getElementById('contact') },
     { id: 'beat', el: document.getElementById('beat') },
+    { id: 'writing-vault', el: document.getElementById('writing-vault') },
     { id: 'portfolio', el: document.getElementById('portfolio') },
     { id: 'about', el: document.getElementById('about') },
     { id: 'home', el: document.getElementById('home') },
