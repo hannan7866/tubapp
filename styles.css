@@ -764,24 +764,23 @@ a {
   border-radius: calc(var(--radius-xl) - 8px);
   overflow: hidden;
   background: radial-gradient(circle at 50% 65%, #1d2547 0%, #0d1226 70%, #080b16 100%);
-  aspect-ratio: 1 / 1.15;
+  aspect-ratio: 1 / 1.12;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
 }
 
 .hero__image {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  /* Scale and center subject with equal spacing on left and right */
-  transform: scale(1.65) translate(2.8%, 14%);
-  transform-origin: center bottom;
+  object-fit: cover;
+  object-position: center 20%;
+  transform: scale(1);
   transition: transform 0.6s var(--ease-smooth);
 }
 
 .hero__image-card:hover .hero__image {
-  transform: scale(1.72) translate(2.8%, 12%);
+  transform: scale(1.04);
 }
 
 /* Floating 3D Badges */
